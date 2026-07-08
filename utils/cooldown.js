@@ -1,21 +1,49 @@
-const respondidos = {};
+const cooldown = new Map();
 
-const TEMPO = 10 * 60 * 1000;
+const TEMPO = Number(process.env.COOLDOWN_MINUTES || 60);
 
-function podeResponder(numero){
+function podeResponder(numero) {
 
     const agora = Date.now();
 
-    if(respondidos[numero] && agora - respondidos[numero] < TEMPO){
+    if (cooldown.has(numero)) {
 
-        return false;
+        const ultimaResposta = cooldown.get(numero);
+
+        const diferenca = agora - ultimaResposta;
+
+        if (diferenca < TEMPO * 60 * 1000) {
+
+            return false;
+
+        }
 
     }
 
-    respondidos[numero]=agora;
+    cooldown.set(numero, agora);
 
     return true;
 
 }
 
-module.exports={podeResponder};
+function limparCooldown(numero) {
+
+    cooldown.delete(numero);
+
+}
+
+function limparTodos() {
+
+    cooldown.clear();
+
+}
+
+module.exports = {
+
+    podeResponder,
+
+    limparCooldown,
+
+    limparTodos
+
+};

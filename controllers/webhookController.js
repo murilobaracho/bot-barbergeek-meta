@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
+const logger = require('../utils/logger');
+
 const { enviarMensagem } = require('../services/meta');
 const { podeResponder } = require('../utils/cooldown');
 
+// Carrega a mensagem automática
 const mensagem = fs.readFileSync(
-    path.join(__dirname, './mensagem.txt'),
+    path.join(__dirname, '..', 'mensagem.txt'),
     'utf8'
-);
+).trim();
 
 exports.verifyWebhook = (req, res) => {
 
@@ -20,10 +23,13 @@ exports.verifyWebhook = (req, res) => {
         token === process.env.VERIFY_TOKEN
     ) {
 
-        console.log("Webhook verificado com sucesso.");
+        logger.info("Webhook verificado com sucesso.");
+
         return res.status(200).send(challenge);
 
     }
+
+    logger.warn("Tentativa de verificação inválida.");
 
     return res.sendStatus(403);
 
@@ -33,68 +39,81 @@ exports.receiveMessage = async (req, res) => {
 
     try {
 
+        logger.info("Webhook recebido.");
+
         const body = req.body;
 
-        if (
-            body.object !== 'whatsapp_business_account'
-        ) {
+        // Apenas eventos do WhatsApp
+        if (body.object !== 'whatsapp_business_account') {
+
             return res.sendStatus(404);
+
         }
 
         const entry = body.entry?.[0];
+
         const change = entry?.changes?.[0];
 
         const value = change?.value;
 
-        if (!value?.messages) {
+        if (!value) {
+
             return res.sendStatus(200);
+
+        }
+
+        // Ignora status de mensagens
+        if (value.statuses) {
+
+            return res.sendStatus(200);
+
+        }
+
+        // Não existe mensagem
+        if (!value.messages) {
+
+            return res.sendStatus(200);
+
         }
 
         const message = value.messages[0];
 
+        // Apenas texto
+        if (message.type !== "text") {
+
+            logger.info("Mensagem ignorada (não é texto).");
+
+            return res.sendStatus(200);
+
+        }
+
         const numero = message.from;
 
-        const tipo = message.type;
+        const textoRecebido = message.text?.body || "";
 
-        console.log("Mensagem recebida de:", numero);
+        logger.info(`Mensagem recebida de ${numero}`);
+        logger.info(`Texto: ${textoRecebido}`);
 
-        if (tipo !== "text") {
-
-            console.log("Ignorando mídia");
-
-            return res.sendStatus(200);
-
-        }
-
+        // Cooldown
         if (!podeResponder(numero)) {
 
-            console.log("Cooldown ativo:", numero);
+            logger.info(`Cooldown ativo para ${numero}`);
 
             return res.sendStatus(200);
 
         }
 
-        try {
+        await enviarMensagem(numero, mensagem);
 
-    const resultado = await enviarMensagem(numero, mensagem);
+        logger.info(`Resposta enviada para ${numero}`);
 
-    console.log("Mensagem enviada!");
-    console.log(resultado);
-
-} catch (err) {
-
-    console.error("Erro ao enviar:");
-    console.error(err.response?.data || err.message);
-
-}
-
-        res.sendStatus(200);
+        return res.sendStatus(200);
 
     } catch (e) {
 
-        console.log(e);
+        logger.error(e.response?.data || e.message);
 
-        res.sendStatus(500);
+        return res.sendStatus(500);
 
     }
 

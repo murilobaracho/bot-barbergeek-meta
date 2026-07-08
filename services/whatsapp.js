@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const axios = require('axios');
+const logger = require('../utils/logger');
 
 async function enviarMensagem(numero, mensagem){
 
@@ -35,11 +36,11 @@ async function enviarMensagem(numero, mensagem){
 
         );
 
-        console.log("Mensagem enviada para",numero);
+        logger.info("Mensagem enviada para",numero);
 
     }catch(e){
 
-        console.log(e.response?.data || e.message);
+        logger.error(e.response?.data || e.message);
 
     }
 

@@ -1,12 +1,27 @@
+require('dotenv').config();
+
 const express = require('express');
-const router = express.Router();
 
-const webhookController = require('../controllers/webhookController');
+const logger = require('./utils/logger');
 
-// Verificação do webhook (Meta)
-router.get('/', webhookController.verifyWebhook);
+const webhookRoutes = require('./routes/webhook');
 
-// Recebimento das mensagens
-router.post('/', webhookController.receiveMessage);
+const app = express();
 
-module.exports = router;
+app.use(express.json());
+
+app.use('/webhook', webhookRoutes);
+
+app.get('/', (req, res) => {
+
+    res.send('Bot Barbearia Geek Online');
+
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+
+    logger.info(`Servidor iniciado na porta ${PORT}`);
+
+});
