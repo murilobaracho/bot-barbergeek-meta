@@ -1,0 +1,10 @@
+{
+    "name": "promocao",
+    "language": "pt_BR",
+
+    "variables":[
+        "nome",
+        "cupom",
+        "desconto"
+    ]
+}
