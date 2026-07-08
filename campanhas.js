@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { enviarTemplate } = require("./meta");
+const { enviarTemplate } = require("./services/meta");
 
 async function enviarCampanha(nomeCampanha, cliente){
 

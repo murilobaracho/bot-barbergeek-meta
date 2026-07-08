@@ -5,12 +5,14 @@ const express = require('express');
 const logger = require('./utils/logger');
 
 const webhookRoutes = require('./routes/webhook');
+const campanhasRoutes = require('./routes/campanhas');
 
 const app = express();
 
 app.use(express.json());
 
 app.use('/webhook', webhookRoutes);
+app.use('/campanhas', campanhasRoutes);
 
 app.get('/', (req, res) => {
 

@@ -67,6 +67,77 @@ async function enviarMensagem(numero, mensagem) {
 
 }
 
+async function enviarTemplate(numero, nomeTemplate, idioma, parametros) {
+
+    try {
+
+        const response = await axios.post(
+
+            `https://graph.facebook.com/v23.0/${process.env.PHONE_NUMBER_ID}/messages`,
+
+            {
+                messaging_product: "whatsapp",
+
+                recipient_type: "individual",
+
+                to: numero,
+
+                type: "template",
+
+                template: {
+                    name: nomeTemplate,
+
+                    language: {
+                        code: idioma
+                    },
+
+                    components: parametros.length > 0 ? [
+                        {
+                            type: "body",
+                            parameters: parametros
+                        }
+                    ] : []
+                }
+
+            },
+
+            {
+
+                headers: {
+
+                    Authorization: `Bearer ${process.env.META_TOKEN}`,
+
+                    "Content-Type": "application/json"
+
+                }
+
+            }
+
+        );
+
+        logger.info(`Template "${nomeTemplate}" enviado para ${numero}`);
+
+        return response.data;
+
+    } catch (e) {
+
+        logger.error(`Erro ao enviar template "${nomeTemplate}" para ${numero}:`);
+
+        logger.error(
+            JSON.stringify(
+                e.response?.data || e.message,
+                null,
+                2
+            )
+        );
+
+        throw e;
+
+    }
+
+}
+
 module.exports = {
-    enviarMensagem
+    enviarMensagem,
+    enviarTemplate
 };
